@@ -5,7 +5,7 @@ The application uses DOT in order to generate the image of the tree.
 
 ### Installation
 1. Run `java -version` to check what version of Java you have.
-2. Download the application from the Releases page.
+2. Download the application from the [Releases](https://github.com/567legodude/ProductionGrapher/releases) page.
 3. Download and install [Graphviz](https://graphviz.org/download/) and then find the location of the DOT program.
     1. For example, on Windows, DOT may be located at `C:\Program Files\Graphviz\bin\dot.exe`.
     2. Copy the path to the DOT program and paste it in a text file called `dot.txt`. This file should be in the same
