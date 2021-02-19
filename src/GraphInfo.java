@@ -100,7 +100,7 @@ public class GraphInfo {
         builder.append("graph G {\n");
         
         for (Map.Entry<Integer, String> entry : nodes.entrySet()) {
-            String label = extra && (entry.getValue().startsWith("<") || full) ? entry.getKey() + ": " + entry.getValue() : entry.getValue();
+            String label = extra && (Grapher.nonEmpty(entry.getValue(), "<", ">") || full) ? entry.getKey() + ": " + entry.getValue() : entry.getValue();
             String shape = extra && relevant >= 0 && relevant == entry.getKey() ? "box" : "plain";
             builder.append(entry.getKey())
                    .append(" [label=\"")
