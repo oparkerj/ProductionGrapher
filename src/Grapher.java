@@ -138,6 +138,8 @@ public class Grapher extends Application {
         fileTypes.put(".gif", new FileChooser.ExtensionFilter("GIF", "*.gif"));
         fileTypes.put(".bmp", new FileChooser.ExtensionFilter("Windows Bitmap", "*.bmp"));
         fileTypes.put(".svg", new FileChooser.ExtensionFilter("SVG", "*.svg"));
+        fileTypes.put(".dot", new FileChooser.ExtensionFilter("DOT File", "*.dot"));
+        fileTypes.put(".pdf", new FileChooser.ExtensionFilter("PDF File", "*.pdf"));
     }
     
     private void initEvents() {
