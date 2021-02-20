@@ -23,7 +23,9 @@ The application uses DOT in order to generate the image of the tree.
 The large textbox on the left is where production rules go.  
 Rules have the format `<rule> ::= options`  
 `options` are the possible values of the production rule separated by pipes `|`. Pipes that are
-adjacent to another pipe or escaped with a backslash will not split values.
+adjacent to another pipe or escaped with a backslash will not split values.  
+**Shortcut**: Ctrl+Click in the textbox to select a file to load into the textbox. Files
+can also be dragged and dropped into this textbox to load a predefined set of rules.
 
 The small textbox on the left shows a number next to the production rules in the large textbox.
 These numbers are used when referring to a particular production rule.

@@ -1,10 +1,15 @@
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
@@ -149,6 +154,35 @@ public class Grapher extends Application {
                                             .map(Rule::getLine)
                                             .collect(Collectors.toList());
             updateCount(lines);
+        });
+        // Allow a file to be dragged into the definitions
+        defs.setOnMouseClicked(event -> {
+            if (event.isControlDown()) {
+                FileChooser fc = new FileChooser();
+                File file = fc.showOpenDialog(stage);
+                if (file != null) loadFile(file);
+            }
+            event.consume();
+        });
+        defs.setOnDragOver(event -> {
+            if (event.getDragboard().hasFiles()) {
+                event.acceptTransferModes(TransferMode.COPY);
+            }
+            event.consume();
+        });
+        defs.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            if (db.hasFiles()) {
+                List<File> files = db.getFiles();
+                if (files.size() == 1) {
+                    if (loadFile(files.get(0))) {
+                        event.setDropCompleted(true);
+                        event.consume();
+                    }
+                }
+            }
+            event.setDropCompleted(false);
+            event.consume();
         });
         
         // All possible commands
@@ -341,6 +375,17 @@ public class Grapher extends Application {
                 saveImage();
             }
         });
+    }
+    
+    private boolean loadFile(File file) {
+        try {
+            defs.setText(new String(Files.readAllBytes(file.toPath())));
+            return true;
+        } catch (IOException e) {
+            Utils.error("Error", "An exception occurred while reading the file.");
+            e.printStackTrace();
+        }
+        return false;
     }
     
     /**
