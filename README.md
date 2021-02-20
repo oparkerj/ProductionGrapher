@@ -31,7 +31,11 @@ The small textbox on the left shows a number next to the production rules in the
 These numbers are used when referring to a particular production rule.
 
 The resulting tree is shown on the right side. Right-clicking in this area will open a dialog
-to save the image. File extensions .jpeg, .png, .gif, .svg, and .bmp are supported.
+to save the image.  
+The graph can be exported in the following formats:
+* Image formats: .jpeg, .png, .gif, .svg, and .bmp
+* PDF File
+* DOT File; The text that is given to DOT in order to generate the graph.
 
 The following terminology is used in this section:
 * **Production ID**: The number that appears in the small text box next to a production rule.
