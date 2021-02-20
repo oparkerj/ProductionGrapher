@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class Grapher extends Application {
     
@@ -187,13 +186,9 @@ public class Grapher extends Application {
                 if (state == SELECT && !text.isEmpty()) {
                     List<Integer> options = new LinkedList<>();
                     for (int i = 0; i < selecting.getParts().size(); i++) {
-                        if (matchesSearch(text, selecting.getParts().get(i))) {
+                        if (Utils.matchesSearch(text, selecting.getParts().get(i))) {
                             options.add(i);
                         }
-                        // Old method of searching
-//                        if (getRuleParts(selecting.getParts().get(i)).anyMatch(s -> s.equals(text))) {
-//                            options.add(i);
-//                        }
                     }
                     if (options.size() == 1) {
                         input.setText("");
@@ -268,7 +263,7 @@ public class Grapher extends Application {
                     int r = Integer.parseInt(text);
                     Rule rule = getRule(r);
                     if (rule == null) {
-                        error("Invalid Index", "Could not get production rule " + r);
+                        Utils.error("Invalid Index", "Could not get production rule " + r);
                         return;
                     }
                     relevant.addLast(graphInfo.newNode(rule.getFullName()));
@@ -425,12 +420,12 @@ public class Grapher extends Application {
         if (n < 0) return;
         String node = graphInfo.getNode(n);
         if (node == null) {
-            error("Invalid node", "There is no production rule for node " + n);
+            Utils.error("Invalid node", "There is no production rule for node " + n);
             return;
         }
         Rule rule = getRule(node);
         if (rule == null) {
-            error("Invalid node", "There is no production rule for node " + n);
+            Utils.error("Invalid node", "There is no production rule for node " + n);
             return;
         }
         select(n, rule);
@@ -467,7 +462,7 @@ public class Grapher extends Application {
         i--;
         if (i >= selecting.getParts().size()) {
             state = SELECT;
-            error("Invalid", "Invalid line number.");
+            Utils.error("Invalid", "Invalid line number.");
             return;
         }
         // Add elements from the selection to the graph
@@ -481,25 +476,13 @@ public class Grapher extends Application {
     }
     
     private void addRuleParts(String part, int parent) {
-        getRuleParts(part).map(s -> graphInfo.newNode(s))
-                          .collect(Collectors.toCollection(LinkedList::new))
-                          .descendingIterator()
-                          .forEachRemaining(n -> {
-                              graphInfo.addLink(parent, n);
-                              if (nonEmpty(graphInfo.getNode(n), "<", ">")) relevant.addFirst(n);
-                          });
-    }
-    
-    /**
-     * Get the elements from the given branch of a production rule that
-     * will be added to the graph.
-     *
-     * Elements are either split by spaces or at non-terminal symbols.
-     * @param part Selected part of production rule.
-     * @return Stream of pieces to add.
-     */
-    private Stream<String> getRuleParts(String part) {
-        return Arrays.stream(part.replaceAll("<.+?>", " $0 ").split(" +")).filter(s -> !s.isEmpty());
+        Utils.getRuleParts(part).map(s -> graphInfo.newNode(s))
+             .collect(Collectors.toCollection(LinkedList::new))
+             .descendingIterator()
+             .forEachRemaining(n -> {
+                 graphInfo.addLink(parent, n);
+                 if (Utils.nonEmpty(graphInfo.getNode(n), "<", ">")) relevant.addFirst(n);
+             });
     }
     
     /**
@@ -522,7 +505,7 @@ public class Grapher extends Application {
                   .filter(Objects::nonNull)
                   .forEach(rule -> rule.getParts()
                                        .stream()
-                                       .map(this::formatRuleValue)
+                                       .map(Utils::formatRuleValue)
                                        .forEach(s -> rules.compute(s, (key, val) -> {
                                            if (val == null) val = new HashSet<>(2);
                                            val.add(rule.getFullName());
@@ -537,25 +520,25 @@ public class Grapher extends Application {
             if (first) {
                 first = false;
                 String start = to;
-                Optional<String> startRule = single(rules.keySet().stream().filter(s -> matchesSearch(start, s)));
+                Optional<String> startRule = Utils.single(rules.keySet().stream().filter(s -> Utils.matchesSearch(start, s)));
                 if (startRule.isPresent()) {
                     path.add(startRule.get());
                     to = startRule.get();
                     if (to.equals(target)) return;
                 }
                 else {
-                    error("No node", "Cannot find a node that matches the pattern, or there are multiple nodes that match the pattern.");
+                    Utils.error("No node", "Cannot find a node that matches the pattern, or there are multiple nodes that match the pattern.");
                     return;
                 }
             }
             else path.add(to);
             if (!rules.containsKey(to)) {
-                error("No path", "There is no path to the specified value.");
+                Utils.error("No path", "There is no path to the specified value.");
                 return;
             }
             Set<String> parents = rules.get(to).stream().filter(s -> !checked.contains(s)).collect(Collectors.toSet());
             if (parents.size() != 1) {
-                error("No path", "There is no path to the specified value, or there are multiple paths to the specified value.");
+                Utils.error("No path", "There is no path to the specified value, or there are multiple paths to the specified value.");
                 return;
             }
             to = parents.iterator().next();
@@ -571,7 +554,7 @@ public class Grapher extends Application {
             if (last > -1) graphInfo.addLink(n, last);
             else {
                 String newNode = graphInfo.getNode(n);
-                if (nonEmpty(newNode, "<", ">")) relevant.addFirst(n);
+                if (Utils.nonEmpty(newNode, "<", ">")) relevant.addFirst(n);
             }
             last = n;
             if (valueParent == node) valueParent = last;
@@ -580,66 +563,6 @@ public class Grapher extends Application {
         if (last != -1) graphInfo.addLink(node, last);
         relevant.remove(node);
         redraw(true);
-    }
-    
-    /**
-     * Returns whether the given string starts with the given prefix, ends with
-     * the given suffix, and has some content in between.
-     * @param s String to test
-     * @param prefix String prefix
-     * @param suffix String suffix
-     * @return True if the string is non-empty within the prefix and suffix.
-     */
-    public static boolean nonEmpty(String s, String prefix, String suffix) {
-        return s.length() > prefix.length() + suffix.length() &&
-                s.startsWith(prefix) && s.endsWith(suffix);
-    }
-    
-    /**
-     * Returns the single value in the stream if it exists or empty if the
-     * stream is empty or contains more than one value.
-     * @param stream Stream to check.
-     * @param <T> Stream type
-     * @return Optional of single value in stream.
-     */
-    public static <T> Optional<T> single(Stream<T> stream) {
-        Iterator<T> it = stream.iterator();
-        if (!it.hasNext()) return Optional.empty();
-        Optional<T> op = Optional.ofNullable(it.next());
-        return op.filter(t -> !it.hasNext());
-    }
-    
-    public String formatRuleValue(String value) {
-        return getRuleParts(value).collect(Collectors.joining());
-    }
-    
-    /**
-     * Test a given pattern against a string.
-     * The string matches if it contains all characters from the pattern
-     * anywhere as long as they are in the same order.
-     *
-     * If the pattern is enclosed in single quotes, the string matches if it
-     * contains the substring of the string in quotes.
-     *
-     * If the pattern is enclosed in double quotes, the string matches if it
-     * is exactly the string enclosed in quotes.
-     * @param pattern Pattern string.
-     * @param search Search string.
-     * @return True if the string contains the pattern.
-     */
-    private boolean matchesSearch(String pattern, String search) {
-        if (pattern.length() > 2 && pattern.startsWith("'") && pattern.endsWith("'")) {
-            return search.contains(pattern.substring(1, pattern.length() - 1));
-        }
-        if (pattern.length() > 2 && pattern.startsWith("\"") && pattern.endsWith("\"")) {
-            return search.equals(pattern.substring(1, pattern.length() - 1));
-        }
-        int look = 0;
-        for (char c : search.toCharArray()) {
-            if (c == pattern.charAt(look)) look++;
-            if (look == pattern.length()) return true;
-        }
-        return false;
     }
     
     /**
@@ -671,12 +594,12 @@ public class Grapher extends Application {
         if (file == null) return;
         int index = file.getName().lastIndexOf('.');
         if (index < 0) {
-            error("Unknown format.", "Unknown file format.");
+            Utils.error("Unknown format.", "Unknown file format.");
             return;
         }
         String extension = file.getName().substring(index);
         if (!fileTypes.containsKey(extension)) {
-            error("Unknown format.", "Unknown file format.");
+            Utils.error("Unknown format.", "Unknown file format.");
             return;
         }
         String type = extension.substring(1);
@@ -692,6 +615,7 @@ public class Grapher extends Application {
     
     /**
      * Execute the dot program to get the current visual of the graph.
+     *
      * @param extra Whether to display extras like node IDs and the relevant node.
      * @param full Same as extra but will also display IDs on terminal symbols.
      * If true, extra will also be true.
@@ -701,16 +625,16 @@ public class Grapher extends Application {
      */
     private <T> T executeDot(boolean extra, boolean full, String type, Function<InputStream, T> function) {
         String path = dotPath.getText();
-        if (path.length() > 2 && path.startsWith("\"") && path.endsWith("\"")) {
+        if (Utils.nonEmpty(path, "\"", "\"")) {
             path = path.substring(1, path.length() - 1);
         }
         if (!(new File(path).exists())) {
-            error("Invalid dot path.", "Invalid path to DOT.");
+            Utils.error("Invalid dot path", "Invalid path to DOT.");
             return null;
         }
         String spec = graphInfo.getGraphSpec(extra, full, getRelevant());
         // Execute dot and send output to an Image.
-        // -Tpng tells dot to output the graph as a png image.
+        // -T parameters tells dot to output the graph in a specific format
         ProcessBuilder pb = new ProcessBuilder(path, "-T" + type);
         try {
             Process process = pb.start();
@@ -720,22 +644,10 @@ public class Grapher extends Application {
             process.waitFor();
             return t;
         } catch (IOException | InterruptedException e) {
+            Utils.error("DOT error", "An exception occurred while executing DOT.");
             e.printStackTrace();
         }
         return null;
-    }
-    
-    /**
-     * Display an error dialog.
-     * @param header Header message.
-     * @param msg Message content.
-     */
-    private void error(String header, String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(header);
-        alert.setContentText(msg);
-        alert.showAndWait();
     }
     
 }

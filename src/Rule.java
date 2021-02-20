@@ -33,7 +33,7 @@ public class Rule {
         String[] r = rule.split("::=");
         if (r.length != 2) return null;
         String name = r[0].trim();
-        if (!Grapher.nonEmpty(name, "<", ">")) return null;
+        if (!Utils.nonEmpty(name, "<", ">")) return null;
         name = name.substring(1, name.length() - 1);
         List<String> parts = Arrays.stream(r[1].split("(?<![|\\\\])\\|(?!\\|)"))
                                    .map(String::trim)

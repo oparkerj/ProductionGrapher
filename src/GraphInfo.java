@@ -79,7 +79,10 @@ public class GraphInfo {
      * @return
      */
     public Set<Integer> getIncomplete() {
-        Set<Integer> n = nodes.keySet().stream().filter(i -> Grapher.nonEmpty(nodes.get(i), "<", ">")).collect(Collectors.toSet());
+        Set<Integer> n = nodes.keySet()
+                              .stream()
+                              .filter(i -> Utils.nonEmpty(nodes.get(i), "<", ">"))
+                              .collect(Collectors.toSet());
         n.removeAll(parents.values());
         return n;
     }
@@ -100,7 +103,7 @@ public class GraphInfo {
         builder.append("graph G {\n");
         
         for (Map.Entry<Integer, String> entry : nodes.entrySet()) {
-            String label = extra && (Grapher.nonEmpty(entry.getValue(), "<", ">") || full) ? entry.getKey() + ": " + entry.getValue() : entry.getValue();
+            String label = extra && (Utils.nonEmpty(entry.getValue(), "<", ">") || full) ? entry.getKey() + ": " + entry.getValue() : entry.getValue();
             String shape = extra && relevant >= 0 && relevant == entry.getKey() ? "box" : "plain";
             builder.append(entry.getKey())
                    .append(" [label=\"")
