@@ -35,17 +35,16 @@ The following terminology is used in this section:
 * **Production ID**: The number that appears in the small text box next to a production rule.
 * **Node ID**: The number that appears next to a node in the graph image.
 * **Simple pattern**: A simple pattern is used to locate a particular production value. By default,
-  the pattern specifies that you are looking for the production rule that contains all the characters
-  in the pattern. The characters may be anywhere in the rule but must be in the same order. For
-  example, the pattern `{}` will match any production value that contains both brackets as long as
-  they appear in that order, such as `{ <expr> }`.
-  Surrounding the pattern in single quotes specifies that the production value will match if the
-  pattern appears as a substring. Surrounding the pattern in double quotes specifies that the
-  production value will match if it exactly matches the pattern.
+  the pattern matches any production rule that contains all the characters in the pattern. The characters
+  may be anywhere in the rule but must be in the same order. For example, the pattern `{}` will match any
+  production value that contains both brackets as long as they appear in that order, such as `{ <expr> }`.
+  Surrounding the pattern in single quotes will match any production value that contains the pattern as a substring.
+  Surrounding the pattern in double quotes will match any production value that is exactly equal to the pattern.
 * **Linear path**: A linear path means traveling straight through single production rules from a node
-  to the target value. When the application searches for a linear path to a value, it does a simple search,
-  meaning that multiple paths are not searched; There should be exactly one way to connect a given node
-  to the target value. If there is more than one way to make a path, the search will fail.
+  to the target value. The application will not make any decisions for the user, and as such will
+  not work for ambiguous grammars. There should be exactly one way to connect a given node
+  to the target value. If there is more than one way to create a parse tree from the starting
+  node to the target value, the search will fail.
 * **Relevant node**: As the tree is being built, non-terminal nodes will be added to a list. The current relevant
   node will be indicated with a box. Most quick actions and shortcuts will be performed on the current relevant node.
 

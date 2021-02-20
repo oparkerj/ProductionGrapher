@@ -503,18 +503,31 @@ public class Grapher extends Application {
     }
     
     /**
-     * Find a simple path from the given node to the given value.
+     * Find a simple path from the given node to the value that matches the
+     * given pattern.
      * This will only search for a simple linear path through production
      * rules to the specified value. If there is any ambiguity or multiple
-     * paths to the value, the search is likely to fail.
+     * paths to the value, the search will fail.
      *
      * If a path is found the nodes from the current node to found value are added.
      * @param node Node number to search from.
-     * @param to Value to reach.
+     * @param to Pattern representing value to reach.
      */
     private void simplePath(int node, String to) {
         if (node < 0) return;
-        List<Rule> rules = ruleReader.fromString(defs.getText());
+        Map<String, Set<String>> rules = new HashMap<>();
+        // Fill map of values -> set of production rules that create it
+        ruleReader.fromString(defs.getText())
+                  .stream()
+                  .filter(Objects::nonNull)
+                  .forEach(rule -> rule.getParts()
+                                       .stream()
+                                       .map(this::formatRuleValue)
+                                       .forEach(s -> rules.compute(s, (key, val) -> {
+                                           if (val == null) val = new HashSet<>(2);
+                                           val.add(rule.getFullName());
+                                           return val;
+                                       })));
         String target = graphInfo.getNode(node);
         Set<String> checked = new HashSet<>();
         Queue<String> path = new LinkedList<>();
@@ -524,40 +537,35 @@ public class Grapher extends Application {
             if (first) {
                 first = false;
                 String start = to;
-                Optional<String> startRule = rules.stream()
-                                                  .flatMap(rule -> rule.getParts().stream())
-                                                  .filter(s -> matchesSearch(start, s))
-                                                  .findFirst();
+                Optional<String> startRule = single(rules.keySet().stream().filter(s -> matchesSearch(start, s)));
                 if (startRule.isPresent()) {
                     path.add(startRule.get());
                     to = startRule.get();
+                    if (to.equals(target)) return;
                 }
                 else {
-                    error("No node.", "Cannot find a node that matches the pattern.");
+                    error("No node", "Cannot find a node that matches the pattern, or there are multiple nodes that match the pattern.");
                     return;
                 }
             }
             else path.add(to);
-            boolean found = false;
-            for (Rule rule : rules) {
-                if (checked.contains(rule.getFullName())) continue;
-                String finalTo = to;
-                if (rule.getParts().stream().noneMatch(s -> s.equals(finalTo))) continue;
-                found = true;
-                checked.add(rule.getFullName());
-                to = rule.getFullName();
-                break;
-            }
-            if (!found) {
-                error("No path", "There is no simple path to the specified value.");
+            if (!rules.containsKey(to)) {
+                error("No path", "There is no path to the specified value.");
                 return;
             }
+            Set<String> parents = rules.get(to).stream().filter(s -> !checked.contains(s)).collect(Collectors.toSet());
+            if (parents.size() != 1) {
+                error("No path", "There is no path to the specified value, or there are multiple paths to the specified value.");
+                return;
+            }
+            to = parents.iterator().next();
+            checked.add(to);
         }
         if (path.size() == 0) return;
         // Add the path of nodes
         int last = -1;
-        String base = path.remove();
-        int baseNum = node;
+        String matchedValue = path.remove();
+        int valueParent = node;
         while (path.size() > 0) {
             int n = graphInfo.newNode(path.remove());
             if (last > -1) graphInfo.addLink(n, last);
@@ -566,9 +574,9 @@ public class Grapher extends Application {
                 if (nonEmpty(newNode, "<", ">")) relevant.addFirst(n);
             }
             last = n;
-            if (baseNum == node) baseNum = last;
+            if (valueParent == node) valueParent = last;
         }
-        addRuleParts(base, baseNum);
+        addRuleParts(matchedValue, valueParent);
         if (last != -1) graphInfo.addLink(node, last);
         relevant.remove(node);
         redraw(true);
@@ -585,6 +593,24 @@ public class Grapher extends Application {
     public static boolean nonEmpty(String s, String prefix, String suffix) {
         return s.length() > prefix.length() + suffix.length() &&
                 s.startsWith(prefix) && s.endsWith(suffix);
+    }
+    
+    /**
+     * Returns the single value in the stream if it exists or empty if the
+     * stream is empty or contains more than one value.
+     * @param stream Stream to check.
+     * @param <T> Stream type
+     * @return Optional of single value in stream.
+     */
+    public static <T> Optional<T> single(Stream<T> stream) {
+        Iterator<T> it = stream.iterator();
+        if (!it.hasNext()) return Optional.empty();
+        Optional<T> op = Optional.ofNullable(it.next());
+        return op.filter(t -> !it.hasNext());
+    }
+    
+    public String formatRuleValue(String value) {
+        return getRuleParts(value).collect(Collectors.joining());
     }
     
     /**
