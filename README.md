@@ -44,8 +44,8 @@ The following terminology is used in this section:
   production value will match if it exactly matches the pattern.
 * **Linear path**: A linear path means traveling straight through single production rules from a node
   to the target value. When the application searches for a linear path to a value, it does a simple search,
-  meaning that multiple paths are not searched; There should be a single way to connect a given node
-  to the target value. If there is no simple linear path to a value, the search will fail.
+  meaning that multiple paths are not searched; There should be exactly one way to connect a given node
+  to the target value. If there is more than one way to make a path, the search will fail.
 * **Relevant node**: As the tree is being built, non-terminal nodes will be added to a list. The current relevant
   node will be indicated with a box. Most quick actions and shortcuts will be performed on the current relevant node.
 
