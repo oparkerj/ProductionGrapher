@@ -583,12 +583,12 @@ public class Grapher extends Application {
                 Utils.error("No path", "There is no path to the specified value.");
                 return;
             }
-            Set<String> parents = rules.get(to).stream().filter(s -> !checked.contains(s)).collect(Collectors.toSet());
-            if (parents.size() != 1) {
+            Optional<String> parent = Utils.single(rules.get(to).stream().filter(s -> !checked.contains(s)));
+            if (!parent.isPresent()) {
                 Utils.error("No path", "There is no path to the specified value, or there are multiple paths to the specified value.");
                 return;
             }
-            to = parents.iterator().next();
+            to = parent.get();
             checked.add(to);
         }
         if (path.size() == 0) return;

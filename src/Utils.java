@@ -23,10 +23,10 @@ public class Utils {
      * @return True if the string contains the pattern.
      */
     public static boolean matchesSearch(String pattern, String search) {
-        if (pattern.length() > 2 && pattern.startsWith("'") && pattern.endsWith("'")) {
+        if (nonEmpty(pattern, "'", "'")) {
             return search.contains(pattern.substring(1, pattern.length() - 1));
         }
-        if (pattern.length() > 2 && pattern.startsWith("\"") && pattern.endsWith("\"")) {
+        if (nonEmpty(pattern, "\"", "\"")) {
             return search.equals(pattern.substring(1, pattern.length() - 1));
         }
         int look = 0;
