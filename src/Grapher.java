@@ -310,7 +310,8 @@ public class Grapher extends Application {
                     text = text.substring(1).trim();
                     if (text.isEmpty()) return;
                     int n = Integer.parseInt(text);
-                    addRelevant(graphInfo.unlink(n));
+                    graphInfo.unlink(n);
+                    refreshRelevant();
                     redraw(true);
                 }
                 else if (text.startsWith("=")) {
@@ -328,14 +329,13 @@ public class Grapher extends Application {
                     text = text.substring(1).trim();
                     if (text.isEmpty()) return;
                     int n = Integer.parseInt(text);
-                    relevant.remove(n);
-                    addRelevant(graphInfo.delete(n));
+                    graphInfo.delete(n);
+                    refreshRelevant();
                     redraw(true);
                 }
                 else if (text.startsWith("*")) {
                     // Recalculate relevant nodes
-                    relevant.clear();
-                    graphInfo.getIncomplete().forEach(this::addRelevant);
+                    refreshRelevant();
                     redraw(true);
                 }
                 else if (parts.length == 1) {
@@ -347,8 +347,8 @@ public class Grapher extends Application {
                     // Set parent-child link
                     int parent = Integer.parseInt(parts[0]);
                     int child = Integer.parseInt(parts[1]);
-                    relevant.remove(parent);
                     graphInfo.addLink(parent, child);
+                    refreshRelevant();
                     redraw(true);
                 }
                 else if (parts.length == 3) {
@@ -362,8 +362,8 @@ public class Grapher extends Application {
                         if (parts[1].equals("--") || parts[1].equals("->")) {
                             int parent = Integer.parseInt(parts[0]);
                             int child = Integer.parseInt(parts[2]);
-                            relevant.remove(parent);
                             graphInfo.addLink(parent, child);
+                            refreshRelevant();
                             redraw(true);
                         }
                     }
@@ -406,6 +406,14 @@ public class Grapher extends Application {
     private int getRelevant() {
         if (relevant.size() > 0) return relevant.peekFirst();
         return -1;
+    }
+    
+    /**
+     * Refresh the list of relevant nodes.
+     */
+    private void refreshRelevant() {
+        relevant.clear();
+        graphInfo.getIncomplete().forEach(this::addRelevant);
     }
     
     /**
@@ -516,7 +524,6 @@ public class Grapher extends Application {
         String part = selecting.getParts().get(i);
         addRuleParts(part, parent);
         // Exit selection mode
-        relevant.remove(parent);
         defs.setText(originalRules);
         originalRules = null;
         selecting = null;
@@ -528,8 +535,8 @@ public class Grapher extends Application {
              .descendingIterator()
              .forEachRemaining(n -> {
                  graphInfo.addLink(parent, n);
-                 if (Utils.nonEmpty(graphInfo.getNode(n), "<", ">")) relevant.addFirst(n);
              });
+        refreshRelevant();
     }
     
     /**
@@ -606,9 +613,8 @@ public class Grapher extends Application {
             last = n;
             if (valueParent == node) valueParent = last;
         }
-        addRuleParts(matchedValue, valueParent);
         if (last != -1) graphInfo.addLink(node, last);
-        relevant.remove(node);
+        addRuleParts(matchedValue, valueParent);
         redraw(true);
     }
     
